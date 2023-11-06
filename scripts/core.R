@@ -1,5 +1,8 @@
+library(shiny)
+library(DT)
 library(plyr)
 library(dplyr)
+library(data.table)
 
 get_tumor_types <- function(dir = NULL) {  
   if(is.null(dir)){
