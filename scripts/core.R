@@ -28,12 +28,6 @@ get_predictions <- function(dir = NULL) {
   }
   prediction_files <- sapply( rownames(prediction_files.df), function(x) as.list(prediction_files.df[x,]) )
   percentage <- 0
-  predictions_list <- llply(names(prediction_files), function(y){ 
-    percentage <<- percentage + 1/length(prediction_files)*100
-    incProgress(1/length(prediction_files), detail = paste0(" Progress: ",round(percentage,2),"%"))
-    read.csv(file=prediction_files[[y]]) %>% 
-      split(., f = .$pert_cmap_iname) 
-  } )
-  predictions_list <- setNames(predictions_list, names(prediction_files))
-  return(predictions_list)
+all_predictions.df <- readRDS(paste(dir,"all_predictions.LINCS_LDP_links_tbl.rds",sep = ""))
+return(all_predictions.df) 
 }

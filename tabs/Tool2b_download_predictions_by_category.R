@@ -18,14 +18,14 @@ ui <- fluidPage(
                h4("Select Cancer/Tumor Type"),
                )
       ),
-      selectInput('in1_tt', 'Choose a tumor type of interest to query sensitivity predictions:', get_tumor_types(), multiple=FALSE, selectize=TRUE, selected = get_tumor_types()[1] ),  
+      selectInput('in1_tt', 'Choose a tumor type of interest to query sensitivity predictions:', choices = NULL, multiple=TRUE, selectize=FALSE, selected = "All"),  
       
       fluidRow(
         column(10,
                h4("Select Compound"),
         )
       ),
-      selectizeInput('in2_cp', 'Choose a drug of interest to filter sensitivity predictions by:', ""), 
+      selectInput('in2_cp', 'Choose a drug of interest to filter sensitivity predictions by:', choices = NULL, multiple=FALSE, selectize=TRUE, selected = ""), 
       
       # Button
       downloadButton("downloadData", "Download")
@@ -51,14 +51,30 @@ server <- function(input, output, session) {
       get_predictions("../data/")
     }
   )})
+  
+  outTT = reactive({
+    unique(predictions_list()$TCGA_model_src_name) 
+  })
+  
+  observe({
+    updateSelectInput(session, "in1_tt", 
+                      choices = c("All", outTT())
+    ) 
+  })
+  
   # Combine the selected variables into a new data frame
   observeEvent(eventExpr=input$in1_tt,ignoreInit = F, {
     selectedData <- reactive({
-    predictions_list()[[c(input$in1_tt)]]
-  })
+      if(c(input$in1_tt)=="All"){
+        tbl1 <- predictions_list()
+      } else {
+        tbl1 <- predictions_list()[predictions_list()$TCGA_model_src_name==c(input$in1_tt),]
+      }
+      tbl1 
+    })
     
     outVar = reactive({
-      unique(names(selectedData()))
+      unique(selectedData()$pert_cmap_iname) 
     })
     
     observe({
@@ -70,24 +86,24 @@ server <- function(input, output, session) {
     observeEvent(eventExpr=input$in2_cp,ignoreInit = F, {
       outData_full <- reactive({
         if(c(input$in2_cp)==""){
-          tbl <- rbindlist(selectedData())
+          tbl <- selectedData()
         } else {
-          tbl <- selectedData()[[c(input$in2_cp)]]
+          tbl <- selectedData()[selectedData()$pert_cmap_iname==c(input$in2_cp),]
         }
         tbl
-        })
+      })
       outData <- reactive({
         temp <- as.data.frame(outData_full())
         temp1 <- temp[,-c(1:3),drop=T]
-        colnames(temp1)[3:5]<- c("TCGA_tumor_type_code", "cell_line", "compound_iname")
-        temp2 <- temp1[,c(5,4,3,1,2)] 
+        colnames(temp1)[c(3:5)]<- c("TCGA_tumor_type_code", "cell_line", "compound_iname")
+        temp2 <- temp1[,c(5,4,3,1,2,7)] 
         temp2 <- temp2[order(as.numeric(temp2$prediction_estimate),decreasing = TRUE), ]
         temp2
-        })
+      })
       
       # Table of selected dataset ----
-      output$table <- DT::renderDataTable(
-        outData(),
+      output$table <- DT::renderDataTable(escape = FALSE, 
+                                          outData(),
         options = list(scrollX = TRUE), 
         rownames = FALSE 
         )
