@@ -1,4 +1,4 @@
-source("../scripts/core.R",  local = TRUE)$value
+source("../global.R",  local = TRUE)$value
 
 # Define UI for data download app ----
 ui <- fluidPage(
@@ -18,14 +18,14 @@ ui <- fluidPage(
                h4("Select Cancer/Tumor Type"),
                )
       ),
-      selectInput('in1_tt', 'Choose a tumor type of interest to query sensitivity predictions:', choices = NULL, multiple=TRUE, selectize=FALSE, selected = "All"),  
+      selectInput('in1_tt', 'Choose a tumor type of interest to query sensitivity predictions:', choices = NULL, multiple=TRUE, selectize=FALSE, selected = "All"), 
       
       fluidRow(
         column(10,
                h4("Select Compound"),
         )
       ),
-      selectInput('in2_cp', 'Choose a drug of interest to filter sensitivity predictions by:', choices = NULL, multiple=FALSE, selectize=TRUE, selected = ""), 
+      selectizeInput('in2_cp', label='Choose a drug of interest to filter sensitivity predictions by:', choices = NULL, selected = ""), 
       
       # Button
       downloadButton("downloadData", "Download")
@@ -44,21 +44,21 @@ ui <- fluidPage(
 
 # Define server logic to display and download selected file ----
 server <- function(input, output, session) {
-  # source("../scripts/core.R",  local = TRUE)$value
 
   predictions_list <- reactive({
     withProgress(message = 'Loading...', value = 0, {
-      get_predictions("../data/")
+      get_predictions("../../data/")
     }
   )})
   
   outTT = reactive({
-    unique(predictions_list()$TCGA_model_src_name) 
+    # tcga_code<-unique(predictions_list()$TCGA_model_src_name) 
+    get_tumor_types()
   })
   
   observe({
     updateSelectInput(session, "in1_tt", 
-                      choices = c("All", outTT())
+                      choices = c("All", outTT()$`Cancer Type`)
     ) 
   })
   
@@ -68,7 +68,8 @@ server <- function(input, output, session) {
       if(c(input$in1_tt)=="All"){
         tbl1 <- predictions_list()
       } else {
-        tbl1 <- predictions_list()[predictions_list()$TCGA_model_src_name==c(input$in1_tt),]
+        input_tt <- outTT()$TCGA_code[outTT()$`Cancer Type` == input$in1_tt]
+        tbl1 <- predictions_list()[predictions_list()$TCGA_model_src_name==c(input_tt),]
       }
       tbl1 
     })
@@ -79,7 +80,8 @@ server <- function(input, output, session) {
     
     observe({
       updateSelectizeInput(session, "in2_cp", 
-                        choices = c("", outVar())
+                        choices = c("", outVar()), 
+                        server = TRUE
       ) 
     })
 
@@ -97,6 +99,7 @@ server <- function(input, output, session) {
         temp1 <- temp[,-c(1:3),drop=T]
         colnames(temp1)[c(3:5)]<- c("TCGA_tumor_type_code", "cell_line", "compound_iname")
         temp2 <- temp1[,c(5,4,3,1,2,7)] 
+        temp2 <- merge(temp2, outTT(), by.x = "TCGA_tumor_type_code", by.y = "TCGA_code", all.x = T, all.y = F)
         temp2 <- temp2[order(as.numeric(temp2$prediction_estimate),decreasing = TRUE), ]
         temp2
       })
