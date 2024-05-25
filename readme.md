@@ -1,5 +1,6 @@
 ## SensitivitySeq
-Integrate transcriptional Drug and Disease Signatures to predict cell sensitivity for small molecule compounds. 
-SensitivitySeq features a pan-cancer deep neural network model that predicts cell-line drug sensitivity using transcriptional compound and cell line signatures.
+SensitivitySeq integrates transcriptional treatment and disease signatures using deep learning to predict drug sensitivity to small molecule compounds and genetic dependency in cell line models of cancer. 
+
+SensitivitySeq features pan-cancer deep neural network models capable of predicting cell line drug response outcomes using compound and cell line transcriptional signatures.
 
 http://sensitivityseq.com/ 
