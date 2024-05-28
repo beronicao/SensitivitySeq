@@ -6,6 +6,18 @@ n_epochs <- 25
 # class_weights = list('0'=1, '1'=5) 
 n_seed <- 1234 
 
+# Load/import data
+train_A <- readRDS("train_A.rds")
+train_B <- readRDS("train_B.rds")
+val_A <- readRDS("val_A.rds")
+val_B <- readRDS("val_B.rds")
+test_A <- readRDS("test_A.rds")
+test_B <- readRDS("test_B.rds")
+
+train_labels <- readRDS("train_labels.rds")
+val_labels <- readRDS("val_labels.rds")
+test_labels <- readRDS("test_labels.rds")
+
 # Set seed
 set.seed(n_seed)
 tensorflow::set_random_seed(seed = n_seed)
