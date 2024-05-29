@@ -18,67 +18,63 @@ n_epochs = 25
 
 # Load train, valid, test sets and their labels (csv files)
 
-
 from tensorflow.keras.layers import Input, Dense, Concatenate, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.models import load_model
 
 # Define the input layer for x_input.v8
-input_A = Input(shape=(969,), dtype='float32', name='input_A')
+input_A_MLP = Input(shape=(969,), dtype='float32', name='input_A_MLP')
 # Define the dense layers for x_out.v8
-out_A = Dense(units=969, activation='relu')(input_A)
-out_A = Dense(units=512, activation='relu')(out_A)
-out_A = Dense(units=256, activation='relu')(out_A)
-out_A = Dense(units=128, activation='relu')(out_A)
-out_A = Dense(units=64, activation='relu')(out_A)
-out_A = Dense(units=32, activation='linear')(out_A)
+out_A_MLP = Dense(units=969, activation='relu')(input_A_MLP)
+out_A_MLP = Dense(units=512, activation='relu')(out_A_MLP)
+out_A_MLP = Dense(units=256, activation='relu')(out_A_MLP)
+out_A_MLP = Dense(units=128, activation='relu')(out_A_MLP)
+out_A_MLP = Dense(units=64, activation='relu')(out_A_MLP)
+out_A_MLP = Dense(units=32, activation='linear')(out_A_MLP)
 
 # Define the input layer for y_input.v8
-input_B = Input(shape=(969,), dtype='float32', name='input_B')
+input_B_MLP = Input(shape=(969,), dtype='float32', name='input_B_MLP')
 # Define the dense layers for y_out.v8
-out_B = Dense(units=969, activation='relu')(input_B)
-out_B = Dense(units=512, activation='relu')(out_B)
-out_B = Dense(units=256, activation='relu')(out_B)
-out_B = Dense(units=128, activation='relu')(out_B)
-out_B = Dense(units=64, activation='relu')(out_B)
-out_B = Dense(units=32, activation='linear')(out_B)
+out_B_MLP = Dense(units=969, activation='relu')(input_B_MLP)
+out_B_MLP = Dense(units=512, activation='relu')(out_B_MLP)
+out_B_MLP = Dense(units=256, activation='relu')(out_B_MLP)
+out_B_MLP = Dense(units=128, activation='relu')(out_B_MLP)
+out_B_MLP = Dense(units=64, activation='relu')(out_B_MLP)
+out_B_MLP = Dense(units=32, activation='linear')(out_B_MLP)
 
 # Concatenate the outputs of x_out.v8 and y_out.v8
-output = Concatenate()([out_A, out_B])
+output_MLP = Concatenate()([out_A_MLP, out_B_MLP])
 # Add dense and dropout layers after concatenation
-output = Dense(units=64, activation='relu')(output)
-output = Dropout(rate=0.15)(output)
-output = Dense(units=64, activation='relu')(output)
-output = Dropout(rate=0.15)(output)
-output = Dense(units=64, activation='relu')(output)
-output = Dropout(rate=0.15)(output)
-output = Dense(units=1, activation='sigmoid', name='output')(output)
+output_MLP = Dense(units=64, activation='relu')(output_MLP)
+output_MLP = Dropout(rate=0.15)(output_MLP)
+output_MLP = Dense(units=64, activation='relu')(output_MLP)
+output_MLP = Dropout(rate=0.15)(output_MLP)
+output_MLP = Dense(units=64, activation='relu')(output_MLP)
+output_MLP = Dropout(rate=0.15)(output_MLP)
+output_MLP = Dense(units=1, activation='sigmoid', name='output_MLP')(output_MLP)
 
 # Define the model with the specified inputs and outputs
-SS_model = Model(inputs=[input_A, input_B], outputs=[output])
+SSeq_model = Model(inputs=[input_A_MLP, input_B_MLP], outputs=[output_MLP])
 
 # Print the model summary
-SS_model.summary()
-
+SSeq_model.summary()
 
 # Compile the model
-SS_model.compile(
+SSeq_model.compile(
     optimizer='adam',
     loss={'output': 'binary_crossentropy'},
     loss_weights={'output': 1.0},
     metrics=['binary_accuracy']
 )
 
-
 # Fit the model
-history_fit = SS_model.fit(
-    x={'input_A': train_A, 'input_B': train_B},
+history_fit = SSeq_model.fit(
+    x={'input_A_MLP': train_A, 'input_B_MLP': train_B},
     y=train_labels.iloc[:, 1],
     epochs=n_epochs,
     batch_size=n_batch_size,
-    validation_data=({'input_A': val_A, 'input_B': val_B}, val_labels.iloc[:, 1])
+    validation_data=({'input_A_MLP': val_A, 'input_B_MLP': val_B}, val_labels.iloc[:, 1])
 )
-
 
 # Use matplotlib to plot the history (optional)
 import matplotlib.pyplot as plt
@@ -103,27 +99,21 @@ plt.xlabel('Epoch')
 plt.legend(['Train', 'Validation'], loc='upper left')
 plt.savefig('loss_plot.png')
 
-
 # Save the entire model
-SS_model.save("SS_MLP_model.h5")
+SSeq_model.save("SSeq_MLP_model.h5")
 
 # Save model weights
-SS_model.save_weights("SS_MLP_model_weights.h5")
-
+SSeq_model.save_weights("SSeq_MLP_model_weights.h5")
 
 # Generate predictions
-predictions = SS_model.predict(
-    x={'input_A': test_A, 'input_B': test_B},
+predictions = SSeq_model.predict(
+    x={'input_A_MLP': test_A, 'input_B_MLP': test_B},
     batch_size=n_batch_size
 )
 
-
 # Evaluate the model
-score = SS_model.evaluate(
-    x={'input_A': test_A, 'input_B': test_B},
+score = SSeq_model.evaluate(
+    x={'input_A_MLP': test_A, 'input_B_MLP': test_B},
     y=test_labels.iloc[:, 1],
     batch_size=n_batch_size
 )
-
-
-
